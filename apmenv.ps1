@@ -301,7 +301,12 @@ function Invoke-Install {
                 $i++
             }
         } else {
-            $apmArgsFinal += $CmdArgs[$i]
+            # Resolve relative paths to absolute before we Push-Location into the env
+            $arg = $CmdArgs[$i]
+            if ($arg -notmatch '^-' -and (Test-Path $arg -ErrorAction SilentlyContinue)) {
+                $arg = (Resolve-Path $arg).Path
+            }
+            $apmArgsFinal += $arg
             $i++
         }
     }
@@ -332,9 +337,15 @@ function Invoke-Uninstall {
     $active = Assert-ActiveEnv
     $envPath = Get-EnvPath $active
 
+    # Resolve any relative paths before changing directory
+    $resolvedArgs = $CmdArgs | ForEach-Object {
+        if ($_ -notmatch '^-' -and (Test-Path $_ -ErrorAction SilentlyContinue)) {
+            (Resolve-Path $_).Path
+        } else { $_ }
+    }
     Push-Location $envPath
     try {
-        & apm uninstall @CmdArgs
+        & apm uninstall @resolvedArgs
     } finally {
         Pop-Location
     }

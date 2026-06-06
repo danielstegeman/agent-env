@@ -255,7 +255,23 @@ cmd_install() {
             # normalise space-joined list back to commas
             final_args+=("$(echo "${args[$i]}" | tr ' ' ',')") 
         else
-            final_args+=("${args[$i]}")
+            # Resolve relative paths to absolute before cd-ing into the env folder.
+            # Also convert Linux/WSL paths to Windows paths when apm is a .exe binary.
+            arg="${args[$i]}"
+            if [[ "$arg" != -* ]] && [ -e "$arg" ]; then
+                arg="$(cd "$arg" 2>/dev/null && pwd || realpath "$arg")"
+                # Under WSL, apm may be a wrapper around a .exe — convert to Windows path
+                if command -v wslpath >/dev/null 2>&1; then
+                    # Walk the wrapper script to find the actual binary being exec'd
+                    local apm_bin actual_bin
+                    apm_bin="$(command -v apm)"
+                    actual_bin="$(grep -oE '[^ ]+\.exe' "$apm_bin" 2>/dev/null | head -1 || echo "")"
+                    if [ -n "$actual_bin" ]; then
+                        arg="$(wslpath -w "$arg" 2>/dev/null || echo "$arg")"
+                    fi
+                fi
+            fi
+            final_args+=("$arg")
         fi
         i=$((i+1))
     done
