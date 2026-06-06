@@ -330,6 +330,9 @@ function Invoke-Install {
     } finally {
         Pop-Location
     }
+
+    # Auto-deploy to the output folder so changes are immediately visible
+    Invoke-Deploy @()
 }
 
 function Invoke-Uninstall {
@@ -371,6 +374,7 @@ function Invoke-Deploy {
 
     $targets = @()
     $root = $null
+    $CmdArgs = @($CmdArgs)  # ensure array even when called with no args
 
     for ($i = 0; $i -lt $CmdArgs.Count; $i++) {
         switch ($CmdArgs[$i]) {

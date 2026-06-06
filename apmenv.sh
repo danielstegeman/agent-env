@@ -293,6 +293,9 @@ cmd_install() {
         echo "Targets: $tgt"
     fi
     (cd "$env_path" && apm install "${final_args[@]}")
+
+    # Auto-deploy to the output folder so changes are immediately visible
+    cmd_deploy
 }
 
 cmd_uninstall() {
